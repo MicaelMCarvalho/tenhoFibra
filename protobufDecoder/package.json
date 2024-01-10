@@ -1,0 +1,35 @@
+{
+  "name": "node-project-template",
+  "version": "1.3.0",
+  "scripts": {
+    "serve": "echo 'TODO: Add your serve command here",
+    "start": "npm run serve",
+    "build": "mkdir -p build && cp src/*.js build # TODO: Replace with your build command",
+    "preversion": "git fetch --tags && npm run lint:check && npm test",
+    "version": "npm run build",
+    "postversion": "git push --follow-tags"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=14"
+  },
+  "displayName": "protobuf Decoder API",
+  "description": "Basic protobuf decode JS API",
+  "author": "MicaelMCarvalho",
+  "license": "MIT",
+  "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": "",
+  "keywords": [
+    "API",
+    "protobuf"
+  ],
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "jsbi": "^4.3.0"
+  }
+}
