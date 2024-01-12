@@ -8,12 +8,17 @@ import (
     "tenhoFibra/internal/geoHandler"
 )
 
+type Location struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
 type PostAddress struct {
     Message string 
 }
 
-func hello(w http.ResponseWriter, req *http.Request) {
-    fmt.Fprintf(w, "hello\n")
+func alive(w http.ResponseWriter, req *http.Request) {
+    fmt.Fprintf(w, "Yes, I'm Alive\n")
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {
@@ -35,18 +40,20 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	address := addressData.Message
-    log.Println(addressData.Message)
-
-    geoHandler.GetAddress(address)
+    result := geoHandler.GetCoordinates(address)
+    log.Println(result.Y)
+    log.Println(result.x)
+    result_token := geoHandler.GetToken(result.Y, result.X)
+    log.Println(result_token)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"response": address})
+	json.NewEncoder(w).Encode(map[string]string{"response": "Successful"})
 }
 
 func Server() {
     log.Println("Server Starting")
-    http.HandleFunc("/hello", hello)
+    http.HandleFunc("/alive", alive)
     http.HandleFunc("/headers", headers)
     http.HandleFunc("/tenhofibra", handlePostRequest)
 
