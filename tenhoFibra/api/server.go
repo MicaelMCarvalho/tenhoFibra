@@ -6,12 +6,8 @@ import (
     "log"
     "net/http"
     "tenhoFibra/internal/geoHandler"
+    "tenhoFibra/internal/protobuf"
 )
-
-type Location struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
 
 type PostAddress struct {
     Message string 
@@ -41,10 +37,12 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 	address := addressData.Message
     result := geoHandler.GetCoordinates(address)
-    log.Println(result.Y)
-    log.Println(result.x)
-    result_token := geoHandler.GetToken(result.Y, result.X)
-    log.Println(result_token)
+    token := geoHandler.GetToken(result.Y, result.X)
+    log.Println(token)
+    objectsId := protobuf.DecodeProtobuf(token)
+    log.Println(objectsId)
+    data := geoHandler.GetNetworkInfo(objectsId)
+    log.Println(data)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
