@@ -42,6 +42,7 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
     objectsId := protobuf.DecodeProtobuf(token)
     log.Println(objectsId)
     data := geoHandler.GetNetworkInfo(objectsId)
+    log.Println("\n")
     log.Println(data)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -55,5 +56,6 @@ func Server() {
     http.HandleFunc("/headers", headers)
     http.HandleFunc("/tenhofibra", handlePostRequest)
 
+    log.Println("Server Listening")
     http.ListenAndServe(":8090", nil)
 }

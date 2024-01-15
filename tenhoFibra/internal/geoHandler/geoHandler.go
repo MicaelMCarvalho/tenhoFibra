@@ -43,7 +43,7 @@ type Field struct {
 	Alias string `json:"alias"`
 }
 
-type Attribute struct {
+type AttributeMobile struct {
 	ObjectID   int `json:"objectid"`
 	Operador   int `json:"operador"`
 	VelDL7G    *int `json:"vel_dl_7g,omitempty"`
@@ -55,11 +55,50 @@ type Attribute struct {
 	VozMS2G    int `json:"voz_ms_2g"`
 }
 
-type NetworkInfoData struct {
-	Field []Field `json:"fields"`
-	RecordGroups []Attribute `json:"relatedRecordGroups"`
+type RelatedRecordsMobile struct {
+	Attributes AttributeMobile `json:"attributes"`
 }
 
+type RecordGroupsMobile struct {
+	ObjectID   int `json:"objectId"`
+    RelatedRecords []RelatedRecordsMobile `json:"relatedRecords"`
+}
+
+type MobileInfoData struct {
+    Field []Field `json:"fields"`
+    RecordGroups []RecordGroupsMobile `json:"relatedRecordGroups"`
+}
+
+
+type AttributeTerrestrial struct {
+	ObjectID   int `json:"objectid"`
+	Operador   int `json:"operador"`
+    TechnA     int `json:"tecnologia_a"`
+	VelDwA     int `json:"vel_max_dl_a"`
+	VelUpA     int `json:"vel_max_ul_a"`
+    TechnB     int `json:"tecnologia_b"`
+	VelDwB     int `json:"vel_max_dl_b"`
+	VelUpB     int `json:"vel_max_ul_b"`
+}
+
+type RelatedRecordsTerrestrial struct {
+	Attributes AttributeTerrestrial `json:"attributes"`
+}
+
+type RecordGroupsTerrestrial struct {
+	ObjectID   int `json:"objectId"`
+    RelatedRecords []RelatedRecordsTerrestrial `json:"relatedRecords"`
+}
+
+type TerrestrialInfoData struct {
+	Field []Field `json:"fields"`
+	RecordGroups []RecordGroupsTerrestrial `json:"relatedRecordGroups"`
+}
+
+type Info struct {
+    MobileInfoData MobileInfoData
+    TerrestrialInfoData TerrestrialInfoData
+}
 
 func getUrl(address string) string {
     geocodeUrl := []string{
@@ -78,10 +117,18 @@ func getUrlToken(y float64, x float64) string {
     return geocodeUrl[0] + strconv.FormatFloat(y, 'f', -1, 64) + geocodeUrl[1] + strconv.FormatFloat(x, 'f', -1, 64) + geocodeUrl[2]
 }
 
-func getUrlNetInfo(objectIds []string) string {
+func getUrlMobileInfo(objectIds []string) string {
     geocodeUrl := []string{
         "https://geo.anacom.pt/server/rest/services/publico/Coberturas_Disponiveis/MapServer/3/queryRelatedRecords?f=json&objectIds=",
         "&orderByFields=vel_dl_7g%20DESC%2Cvel_dl_6g%20DESC%2Cvel_dl_5g%20DESC%2Cvel_dl_4g%20DESC%2Cvel_dl_3g%20DESC%2Cvoz_ms_3g%20DESC%2Cvoz_ms_2g%20DESC&outFields=objectid%2Coperador%2Cvel_dl_7g%2Cvel_dl_6g%2Cvel_dl_5g%2Cvel_dl_4g%2Cvel_dl_3g%2Cvoz_ms_3g%2Cvoz_ms_2g&relationshipId=1&returnGeometry=true&definitionExpression=(vel_dl_7g%20is%20not%20null%20and%20vel_dl_7g%20%3C%3E%200)%20or%20(vel_dl_6g%20is%20not%20null%20and%20vel_dl_6g%20%3C%3E%200)%20or%20(vel_dl_5g%20is%20not%20null%20and%20vel_dl_5g%20%3C%3E%200)%20or%20(vel_dl_4g%20is%20not%20null%20and%20vel_dl_4g%20%3C%3E%200)%20or%20(vel_dl_3g%20is%20not%20null%20and%20vel_dl_3g%20%3C%3E%200)%20or%20(voz_ms_3g%20is%20not%20null%20and%20voz_ms_3g%20%3C%3E%200)%20or%20(voz_ms_2g%20is%20not%20null%20and%20voz_ms_2g%20%3C%3E%200)",
+    }
+    return geocodeUrl[0] + strings.Join(objectIds, ",") + geocodeUrl[1]
+}
+
+func getUrlTerrestrialInfo(objectIds []string) string {
+    geocodeUrl := []string{
+        "https://geo.anacom.pt/server/rest/services/publico/Coberturas_Disponiveis/MapServer/0/queryRelatedRecords?f=json&objectIds=",
+        "&orderByFields=vel_max_dl_a%20DESC%2Cvel_max_dl_b%20DESC%2Cvel_max_ul_a%20DESC%2Cvel_max_ul_b%20DESC&outFields=objectid%2Coperador%2Ctecnologia_a%2Cvel_max_dl_a%2Cvel_max_ul_a%2Ctecnologia_b%2Cvel_max_dl_b%2Cvel_max_ul_b&relationshipId=0&returnGeometry=true&definitionExpression=((vel_max_dl_a%20is%20not%20null%20and%20vel_max_dl_a%20%3C%3E%200)%20and%20(vel_max_ul_a%20is%20not%20null%20and%20vel_max_ul_a%20%3C%3E%200))%20or%20((vel_max_dl_b%20is%20not%20null%20and%20vel_max_dl_b%20%3C%3E%200)%20and%20(vel_max_ul_b%20is%20not%20null%20and%20vel_max_ul_b%20%3C%3E%200))",
     }
     return geocodeUrl[0] + strings.Join(objectIds, ",") + geocodeUrl[1]
 }
@@ -131,21 +178,41 @@ func GetToken(y float64, x float64) string{
     return base64Encoded 
 }
 
-func GetNetworkInfo( ObjectsId []string ) NetworkInfoData {
-    var result NetworkInfoData 
-    url := getUrlNetInfo(ObjectsId)
-    resp, err := http.Get(url)
+func GetNetworkInfo(ObjectsId []string) Info {
+    var result Info
+    urlMobile := getUrlMobileInfo(ObjectsId)
+    respMobile, err := http.Get(urlMobile)
 	if err != nil {
         log.Println("Got an error doing http get to geocode.arcgis.com")
         return result
 	}
-    defer resp.Body.Close()
+    defer respMobile.Body.Close()
 
-	var responseBody NetworkInfoData
-    err1 := json.NewDecoder(resp.Body).Decode(&responseBody)
+	var dataMobile MobileInfoData 
+    err1 := json.NewDecoder(respMobile.Body).Decode(&dataMobile)
 	if err1 != nil {
-		log.Fatal(err)
+		log.Fatal(err1)
         return result
 	}
-    return responseBody
+
+    urlTerrestrial := getUrlTerrestrialInfo(ObjectsId)
+    respTerrestrial, err := http.Get(urlTerrestrial)
+	if err != nil {
+        log.Println("Got an error doing http get to geocode.arcgis.com")
+        return result
+	}
+    defer respTerrestrial.Body.Close()
+
+	var dataTerrestrial TerrestrialInfoData
+    err2 := json.NewDecoder(respTerrestrial.Body).Decode(&dataTerrestrial)
+	if err2 != nil {
+		log.Fatal(err2)
+        return result
+	}
+
+    result.MobileInfoData = dataMobile
+    result.TerrestrialInfoData = dataTerrestrial
+    
+    return result 
 }
+
