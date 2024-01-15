@@ -6,6 +6,7 @@ import (
     "log"
     "net/http"
     "tenhoFibra/internal/geoHandler"
+    "tenhoFibra/internal/prettify"
     "tenhoFibra/internal/protobuf"
 )
 
@@ -36,14 +37,19 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	address := addressData.Message
-    result := geoHandler.GetCoordinates(address)
-    token := geoHandler.GetToken(result.Y, result.X)
+    coordinates := geoHandler.GetCoordinates(address)
+    token := geoHandler.GetToken(coordinates.Y, coordinates.X)
     log.Println(token)
     objectsId := protobuf.DecodeProtobuf(token)
     log.Println(objectsId)
     data := geoHandler.GetNetworkInfo(objectsId)
+    result := prettify.PrettifyData(data)
     log.Println("\n")
-    log.Println(data)
+    log.Println(result)
+
+    ids := geoHandler.GetProvidersIds()
+    log.Println("\n")
+    log.Println(ids)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

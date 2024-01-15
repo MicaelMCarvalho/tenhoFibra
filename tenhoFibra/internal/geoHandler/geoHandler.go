@@ -78,7 +78,7 @@ type AttributeTerrestrial struct {
 	VelUpA     int `json:"vel_max_ul_a"`
     TechnB     int `json:"tecnologia_b"`
 	VelDwB     int `json:"vel_max_dl_b"`
-	VelUpB     int `json:"vel_max_ul_b"`
+	VelUp     int `json:"vel_max_ul_b"`
 }
 
 type RelatedRecordsTerrestrial struct {
@@ -98,6 +98,18 @@ type TerrestrialInfoData struct {
 type Info struct {
     MobileInfoData MobileInfoData
     TerrestrialInfoData TerrestrialInfoData
+}
+
+type Provider struct {
+	ID                    int      `json:"id"`
+	Name                  string   `json:"name"`
+	ParentLayerID         int      `json:"parentLayerId"`
+	DefaultVisibility     bool     `json:"defaultVisibility"`
+	SubLayerIds           []int    `json:"subLayerIds"`
+	MinScale              int      `json:"minScale"`
+	MaxScale              int      `json:"maxScale"`
+	Type                  string   `json:"type"`
+	SupportsDynamicLegends bool     `json:"supportsDynamicLegends"`
 }
 
 func getUrl(address string) string {
@@ -216,3 +228,43 @@ func GetNetworkInfo(ObjectsId []string) Info {
     return result 
 }
 
+
+func GetProvidersIds() string {
+    var result string 
+    url := "https://geo.anacom.pt/server/rest/services/publico/EstatisticasMercado_Pub/MapServer?f=json"
+    resp, err := http.Get(url)
+	if err != nil {
+        log.Println("Got an error doing http get to geocode.arcgis.com")
+        return result
+	}
+    defer resp.Body.Close()
+    
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading the response body:", err)
+		return result
+	}
+
+	var info map[string]json.RawMessage
+
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return result
+	}
+
+    log.Println("Reading json")
+	if value, ok := info["layers"]; ok {
+		var provider []Provider
+		err := json.Unmarshal(value, &provider)
+		if err != nil {
+			fmt.Println("Error decoding field:", err)
+		    return result
+		}
+		fmt.Println("Value of fieldName:", provider)
+	} else {
+		fmt.Println("Field fieldName not found in JSON")
+	}
+
+    return result 
+}
